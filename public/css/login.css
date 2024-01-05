@@ -1,0 +1,81 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+}
+.login-form {
+  width: 50%;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px 0px #000;
+  height: 49%;
+}
+.login-form h2 {
+  text-align: center;
+  margin-bottom: 40px;
+  color: #333;
+  margin-top: 40px;
+}
+.login-form input[type="email"],
+.login-form input[type="password"] {
+  width: 95%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-bottom: 30px;
+}
+.login-form input[type="submit"] {
+  width: 98%;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  color: #fff;
+  background-color: #007bff;
+}
+.login-form input[type="submit"]:hover {
+  background-color: #0d67c8;
+  cursor: pointer;
+}
+.message {
+  color: red;
+  margin-bottom: 10px;
+}
+
+/* ........media-query......... */
+@media screen and (max-width: 980px) {
+  .login-form {
+    width: 65%;
+  }
+}
+
+@media screen and (max-width: 680px) {
+  .login-form {
+    width: 62%;
+    height: 69%;
+  }
+  .login-heading {
+    margin-top: 76px;
+  }
+  .login-form input[type="email"],
+  .login-form input[type="password"] {
+    margin-bottom: 61px;
+  }
+}
+
+@media screen and (max-width: 550px) {
+  .login-form {
+    width: 81%;
+    height: 69%;
+  }
+}

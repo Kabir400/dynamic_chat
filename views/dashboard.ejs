@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./css/dashboard.css" />
+    <!-- <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script> -->
+    <script src="/socket.io/socket.io.js"></script>
+    <title>Dashboard-Page</title>
+  </head>
+  <body>
+    <%- include('./component/nav.ejs'); %>
+    <div class="dahboard">
+      <div id="sidebar">
+        <h2>Contacts</h2>
+        <input type="text" placeholder="Search..." id="search-bar" />
+        <ul id="contacts">
+          <% if(users.length>0){ for(let a of users){ %>
+          <div class="contact-list">
+            <div
+              class="contact-list-container"
+              onclick="clickHandler('<%=a._id %>')"
+            >
+              <div class="contact-img-container">
+                <% if(a.image) { %>
+                <img
+                  src="/uploads/image/<%= a.image %>"
+                  class="contact-img"
+                  alt="user image"
+                />
+                <% if(a.is_online==1){ %>
+                <span class="status-dot online" id="<%=a._id%>"></span>
+                <% } else { %>
+                <span class="status-dot offline" id="<%=a._id%>"></span>
+                <% } %> <% } else { %>
+                <img src="./public/image/nophoto.png" class="contact-img" />
+                <% if(a.is_online==1){ %>
+
+                <span class="status-dot online" id="<%=a._id%>"></span>
+                <% } else { %>
+                <span class="status-dot offline" id="<%=a._id%>"></span>
+                <% } %> <% } %>
+              </div>
+              <li class="contact"><%=a.name %></li>
+            </div>
+            <hr />
+          </div>
+          <%} } %>
+        </ul>
+      </div>
+      <!-- box container for chats-->
+      <div class="box">
+        <!-- status bar -->
+        <div class="status-bar">
+          <div class="profile-pic"></div>
+          <div class="info">
+            <div class="name">Name Placeholder</div>
+            <div class="email">Email Placeholder</div>
+            <div class="status"></div>
+          </div>
+        </div>
+        <!-- .............. -->
+        <!-- chat containter -->
+        <div class="container"></div>
+        <!-- ........... -->
+        <!-- messga form -->
+        <div class="send">
+          <form action="#" id="send-container">
+            <input
+              type="text"
+              name="messageInp"
+              id="messageInp"
+              autocomplete="off"
+              placeholder="Enter your message here"
+            />
+            <button class="btn" type="submit">send</button>
+          </form>
+        </div>
+        <!-- ........... -->
+      </div>
+      <!-- illustration -->
+      <div class="img-box">
+        <img src="/image/illustration.png" class="illustration" />
+      </div>
+    </div>
+
+    <!-- ...................scripting.........................-->
+
+    <script>
+      //variable--
+
+       //dom variable
+       const imgBox = document.querySelector(".img-box");
+          const box = document.querySelector(".box");
+          const status = document.querySelector(".status");
+          const profileBox = document.querySelector(".profile-pic");
+          const name = document.querySelector(".name");
+          const email = document.querySelector(".email");
+          const messageInp=document.getElementById("messageInp");
+          const chatConatainer=document.querySelector(".container");
+          const sendContainer=document.getElementById("send-container");
+          const sidebar=document.getElementById("sidebar");
+
+      //normal variable
+      let sender_id = "<%=user._id %>";
+      let reciver_id;
+
+
+      // ..........................................................
+
+      //socket connection--
+      const socket = io("/user", {
+          auth: { token: sender_id },
+        });
+
+
+      // .............................................................
+
+      //functions----
+
+      //function for media query
+      function handleScreenChange(e) {
+      if (e.matches) {
+      //code for small screen
+      sidebar.style.display="none";
+      imgBox.style.display = "none";
+      box.style.display = "block";
+      box.style.width="100%";
+      } else {
+      // Code for larger screen
+      imgBox.style.display = "none";
+      box.style.display = "block";
+      sidebar.style.display="block";
+      }
+      }
+      // Create a media query list object
+      let mql = window.matchMedia("(max-width: 550px)");
+
+
+      //scroll bottom function
+       function scrollToBottom() {
+           chatConatainer.scrollTop = chatConatainer.scrollHeight;
+       }
+
+
+      //cllickHandler fuction--
+
+       const clickHandler = (id) => {
+      //define reciver_id
+       reciver_id = id;
+
+      //getting user
+      let users = <%- JSON.stringify(users) %>;
+      let people = users.find((user) => user._id === id);
+
+      //dom code
+
+      //displaying chat box--
+
+      mql.addListener(handleScreenChange);
+      handleScreenChange(mql);//this is the function for media query in js
+
+      //status bar--
+
+      //displaying profile pic
+      if (people.image) {
+          profileBox.innerHTML = `<img src=/uploads/image/${people.image} alt="Profile Picture" />`;
+      } else {
+          profileBox.innerHTML = `  <img src="/image/nophoto.png" alt="Profile Picture" />`;
+       }
+
+      //displaying name and email--
+      name.textContent = `${people.name}`;
+      email.textContent = `${people.email}`;
+
+      //diplaying online offline status--
+           if (people.is_online == "1") {
+                status.classList.remove("offline-status");
+                status.classList.add("online-status");
+                status.textContent = "Online";
+              } else {
+                status.classList.remove("online-status");
+                status.classList.add("offline-status");
+                status.textContent = "Offline";
+              }
+
+            //load old chats--
+            socket.emit("existChat",{sender_id:sender_id,reciver_id:reciver_id});
+
+       };
+      // ...........................................................
+
+
+      //Events--
+
+      //message handler--
+       sendContainer.addEventListener("submit",(e)=>{
+          e.preventDefault();
+            if(messageInp.value){
+              socket.emit("msg-init",{sender_id:sender_id,reciver_id:reciver_id,message:messageInp.value});
+            }
+          })
+      // .......................................................
+
+      //socket code--
+
+      //showing own message--
+      socket.on("chatSuccess",({data})=>{
+      const chat=data.message;
+      let html=`<div class="message right">${chat}</div>`;
+      chatConatainer.innerHTML += html;
+      messageInp.value="";
+      socket.emit("msg-send",{data:data});
+      //scrolling bottom--
+      setTimeout(scrollToBottom, 0);
+      })
+
+      //showing others message--
+      socket.on("display-msg",(data)=>{
+      if(sender_id == data.reciver_id && reciver_id== data.sender_id){
+        const chat=data.message;
+        let html=`<div class="message left">${chat}</div>`;
+        chatConatainer.innerHTML += html;
+        //scrolling bottom--
+        setTimeout(scrollToBottom, 0);
+      }
+      })
+
+
+      //scoket for chaging online offline status--
+
+      //online status
+        socket.on("changeOnline", (id) => {
+              const userSpan = document.getElementById(id);
+              userSpan.classList.remove("offline");
+              userSpan.classList.add("online");
+               status.classList.remove("offline-status");
+                status.classList.add("online-status");
+                status.textContent = "Online";
+        });
+
+      //offline status
+            socket.on("changeOffline", (id) => {
+              const userSpan = document.getElementById(id);
+              userSpan.classList.remove("online");
+              userSpan.classList.add("offline");
+               status.classList.remove("online-status");
+                status.classList.add("offline-status");
+                status.textContent = "Offline";
+            });
+
+      //socket for loading the old chats--
+      socket.on("loadChats",(data)=>{
+      const chats=data.chats;
+      console.log(chats);
+      for( let chat of chats){
+       let addClass='';
+       if(chat['sender_id']==sender_id){
+        addClass="message right";
+       }else{
+        addClass="message left";
+       }
+       let html=`<div class="${addClass}">${chat.message}</div>`;
+        chatConatainer.innerHTML += html;
+      }
+      //scrolling bottom--
+      setTimeout(scrollToBottom, 0);
+      })
+    </script>
+  </body>
+</html>
